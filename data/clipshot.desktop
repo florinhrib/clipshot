@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=ClipShot
+GenericName=Screenshot Tool
+Comment=CleanShot-class screenshots for Linux / Wayland
+Exec=clipshot --region
+Icon=camera-photo
+Categories=Utility;Graphics;
+Keywords=screenshot;capture;region;annotate;ocr;
+StartupNotify=false
+NoDisplay=false

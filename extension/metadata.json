@@ -1,0 +1,8 @@
+{
+  "name": "ClipShot Helper",
+  "uuid": "clipshot@florinlab.uk",
+  "description": "Optional compositor-level screenshot helper for the ClipShot app. Exposes the Shell's internal screenshot API over D-Bus (uk.florinlab.ClipShot) so ClipShot can capture the full screen, the active window (with geometry), and an area at full fidelity — preserving open menus that portal screenshots would dismiss. ClipShot works without this extension; it only improves capture quality.",
+  "shell-version": ["45", "46", "47", "48", "49", "50"],
+  "url": "https://florinlab.uk/clipshot",
+  "session-modes": ["user"]
+}

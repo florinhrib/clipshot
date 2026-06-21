@@ -1,0 +1,43 @@
+{
+  "_comment": [
+    "ClipShot — input-remapper v2 preset.",
+    "Maps the mouse side button (BTN_SIDE) to trigger a region capture.",
+    "",
+    "To use this preset:",
+    "  1. Install input-remapper: sudo dnf install input-remapper  (Fedora)",
+    "                             sudo apt install input-remapper   (Debian/Ubuntu)",
+    "  2. Enable the service:     sudo systemctl enable --now input-remapper",
+    "  3. Open input-remapper-gtk, click 'Import', select this file.",
+    "  4. Choose your mouse device, then click 'Apply' and 'Autoload'.",
+    "",
+    "The mapping executes `clipshot --region` via a terminal command.",
+    "Adjust BTN_SIDE to BTN_EXTRA (thumb-2) or another button as needed."
+  ],
+  "name": "clipshot",
+  "mappings": [
+    {
+      "input_combination": [
+        {
+          "type": 1,
+          "code": 275,
+          "analog_threshold": null
+        }
+      ],
+      "target_uinput": "keyboard",
+      "output_type": null,
+      "output_code": null,
+      "output_symbol": "key(BTN_SIDE).set_key(None)",
+      "macro": "key(BTN_SIDE)",
+      "name": "Region Capture",
+      "comment": "BTN_SIDE (mouse button 5 / side button) → clipshot --region",
+      "release_timeout": 0.05,
+      "output_type_key": null,
+      "gain": 1.0,
+      "expo": 0.0,
+      "deadzone": 0.1,
+      "mapping_type": "macro",
+      "macro_string": "command(clipshot --region)"
+    }
+  ],
+  "version": 2
+}

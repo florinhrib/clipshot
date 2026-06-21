@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "clipshot"
+version = "0.1.0"
+description = "CleanShot-class screenshots for Linux / Wayland (GNOME-first)"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+authors = [{ name = "Florin Hrib", email = "florinhrib@gmail.com" }]
+
+# Runtime pip-installable dependencies.
+# PyGObject (gi) MUST come from the OS package manager — NOT pip.
+#   Fedora:  sudo dnf install python3-gobject gtk4 libadwaita
+#   Debian:  sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-adw-1
+#   Arch:    sudo pacman -S python-gobject gtk4 libadwaita
+# Do NOT add "PyGObject" here; the pip wheel is broken on most distros.
+dependencies = [
+    "pillow>=10.0",
+    "dasbus>=1.6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-cov"]
+
+[project.scripts]
+clipshot = "clipshot.app:main"
+
+[project.entry-points."clipshot.plugins"]
+# placeholder for future plugin discovery
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["clipshot*", "extension*"]
+
+[tool.setuptools.package-data]
+"clipshot" = ["py.typed"]
+"*" = [
+    "data/*.desktop",
+    "data/*.service",
+    "data/icons/*.svg",
+    "data/icons/*.png",
+    "extension/metadata.json",
+    "extension/*.js",
+    "presets/**/*.json",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"

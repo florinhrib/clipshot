@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=ClipShot Daemon
+Comment=ClipShot background daemon — keeps the tray and clipboard offer alive
+Exec=clipshot --daemon
+Icon=camera-photo
+Categories=Utility;
+StartupNotify=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=3

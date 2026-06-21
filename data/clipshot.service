@@ -1,0 +1,17 @@
+[Unit]
+Description=ClipShot screenshot daemon
+Documentation=https://github.com/florinhrib/clipshot
+# Start after the graphical session is ready (Wayland compositor up, D-Bus session running).
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/clipshot --daemon
+Restart=on-failure
+RestartSec=3
+# Give the session a moment to settle before the first start.
+ExecStartPre=/bin/sleep 2
+
+[Install]
+WantedBy=graphical-session.target

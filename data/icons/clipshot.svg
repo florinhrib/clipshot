@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- ClipShot icon: rounded square camera with a marquee-selection corner accent -->
+
+  <!-- Background rounded square -->
+  <rect x="8" y="8" width="112" height="112" rx="22" ry="22"
+        fill="#1e1e2e" />
+
+  <!-- Camera body (rounded rect) -->
+  <rect x="24" y="46" width="80" height="54" rx="10" ry="10"
+        fill="none" stroke="#cdd6f4" stroke-width="5" />
+
+  <!-- Camera lens (outer ring) -->
+  <circle cx="64" cy="73" r="18"
+          fill="none" stroke="#cdd6f4" stroke-width="4.5" />
+
+  <!-- Camera lens (inner) -->
+  <circle cx="64" cy="73" r="9"
+          fill="#89b4fa" opacity="0.85" />
+
+  <!-- Camera viewfinder bump at top -->
+  <rect x="46" y="36" width="36" height="14" rx="6" ry="6"
+        fill="#cdd6f4" />
+
+  <!-- Shutter / flash dot -->
+  <circle cx="96" cy="56" r="5"
+          fill="#f38ba8" />
+
+  <!-- Marquee selection corners (top-left area, accent colour) -->
+  <!-- top-left corner bracket -->
+  <path d="M20 28 L20 18 L30 18"
+        fill="none" stroke="#89b4fa" stroke-width="4"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- top-right corner bracket -->
+  <path d="M108 28 L108 18 L98 18"
+        fill="none" stroke="#89b4fa" stroke-width="4"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
