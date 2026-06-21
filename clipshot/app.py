@@ -345,7 +345,36 @@ class ClipShotApp(Adw.Application):
         self.quit()
 
 
+USAGE = """\
+ClipShot — CleanShot-class screenshots for Linux / Wayland.
+
+Usage: clipshot [OPTION]
+  (no option)        capture a region (same as --region)
+  --daemon           run the tray daemon (start at login)
+  --region           capture a region
+  --fullscreen       capture the whole screen
+  --window           capture a window
+  --ocr              extract text from a region (needs tesseract)
+  --previous         repeat the last region
+  --timer=N          region capture after N seconds
+  --settings         open settings
+  --history          open capture history
+  -h, --help         show this help
+  -V, --version      show version
+"""
+
+
 def main(argv=None):
+    argv = list(argv if argv is not None else sys.argv)
+    # Handle help/version locally so they never reach GApplication routing
+    # (otherwise an unrecognised flag falls through to the default capture).
+    rest = argv[1:]
+    if any(a in ("-h", "--help") for a in rest):
+        print(USAGE)
+        return 0
+    if any(a in ("-V", "--version") for a in rest):
+        print(f"clipshot {__version__}")
+        return 0
     Adw.init()
     app = ClipShotApp()
-    return app.run(argv if argv is not None else sys.argv)
+    return app.run(argv)
