@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClipShot — How It Works</title>
+<style>
+  :root{
+    --bg:#16161e; --bg2:#1a1b26; --panel:#1f2335; --panel2:#24283b;
+    --ink:#c0caf5; --muted:#7f88b3; --line:#2a2e42;
+    --blue:#7aa2f7; --cyan:#7dcfff; --green:#9ece6a; --mag:#bb9af7;
+    --orange:#ff9e64; --red:#f7768e; --yellow:#e0af68;
+    --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:radial-gradient(1200px 700px at 70% -10%,#1d2233 0,var(--bg) 55%);
+    color:var(--ink);font-family:var(--sans);line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px 90px}
+  header.hero{padding:64px 0 30px;border-bottom:1px solid var(--line)}
+  .badge{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--cyan);border:1px solid var(--line);
+    padding:5px 11px;border-radius:999px;background:#1b2030}
+  h1{font-size:48px;margin:18px 0 6px;letter-spacing:-.02em;font-weight:800;
+    background:linear-gradient(92deg,#fff,var(--blue) 55%,var(--mag));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .tag{color:var(--muted);font-size:19px;margin:0 0 18px;max-width:680px}
+  .pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .pill{font-family:var(--mono);font-size:12.5px;color:var(--ink);background:var(--panel);
+    border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+  .pill b{color:var(--green)}
+  h2{font-size:26px;margin:54px 0 6px;letter-spacing:-.01em;display:flex;align-items:center;gap:11px}
+  h2 .n{font-family:var(--mono);font-size:14px;color:var(--blue);background:#1b2233;
+    border:1px solid var(--line);border-radius:8px;padding:3px 9px}
+  h3{font-size:18px;margin:26px 0 6px;color:#dfe5ff}
+  p{margin:10px 0}
+  a{color:var(--cyan);text-decoration:none;border-bottom:1px solid #2f5470}
+  a:hover{color:#a6dcff}
+  code{font-family:var(--mono);font-size:.88em;background:#12141d;border:1px solid var(--line);
+    padding:1.5px 6px;border-radius:6px;color:var(--cyan)}
+  .kbd{font-family:var(--mono);font-size:13px;background:#262b40;border:1px solid #353b56;
+    border-bottom-width:2px;border-radius:7px;padding:3px 9px;color:#fff;white-space:nowrap}
+  .card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);
+    border-radius:14px;padding:20px 22px;margin:16px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:680px){.grid{grid-template-columns:1fr}h1{font-size:36px}}
+  .feat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 17px}
+  .feat h4{margin:0 0 5px;font-size:15.5px;color:#fff;display:flex;gap:8px;align-items:center}
+  .feat .ic{width:9px;height:9px;border-radius:3px;flex:none}
+  .feat p{margin:0;color:var(--muted);font-size:14px}
+  pre{background:#0f1118;border:1px solid var(--line);border-left:3px solid var(--blue);
+    border-radius:10px;padding:15px 17px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.6}
+  pre .c{color:#5a6488}.pre .k{color:var(--mag)}
+  .flow{display:flex;flex-direction:column;gap:0;margin:8px 0}
+  .step{display:flex;gap:14px;align-items:flex-start;padding:13px 0;border-bottom:1px dashed var(--line)}
+  .step:last-child{border-bottom:0}
+  .step .num{font-family:var(--mono);font-weight:700;color:#0f1118;background:var(--blue);
+    min-width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:13px;margin-top:2px}
+  .step b{color:#fff}.step .d{color:var(--muted);font-size:14.5px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14.5px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em}
+  td:first-child{white-space:nowrap}
+  .note{border-left:3px solid var(--yellow);background:#211f17;border-radius:0 10px 10px 0;padding:13px 16px;margin:16px 0}
+  .note.ok{border-color:var(--green);background:#16201a}
+  .note.warn{border-color:var(--orange);background:#231a14}
+  .note b{color:#fff}
+  ul.clean{list-style:none;padding:0;margin:10px 0}
+  ul.clean li{padding:6px 0 6px 26px;position:relative;color:var(--ink)}
+  ul.clean li::before{content:"▸";position:absolute;left:4px;color:var(--blue)}
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:13.5px}
+  .lab{font-family:var(--mono);color:var(--mag)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <span class="badge">ClipShot · v0.1.0 · built 2026-06-21</span>
+  <h1>ClipShot</h1>
+  <p class="tag">A CleanShot-X-class screenshot tool for Linux &amp; Wayland — built from scratch for the
+  GNOME desktop. Press a key, drag a box on a frozen screen, and the image is already on your clipboard.</p>
+  <div class="pills">
+    <span class="pill"><b>Python</b> · GTK4 + libadwaita</span>
+    <span class="pill"><b>Wayland</b>-native (GNOME 50)</span>
+    <span class="pill">repo · <b>florinhrib/clipshot</b></span>
+    <span class="pill">deploys to <b>any Linux box</b></span>
+  </div>
+</header>
+
+<h2><span class="n">01</span> What it is</h2>
+<p>ClipShot is your own screenshot app — the Linux answer to <b>CleanShot X</b> on the Mac. It lives in the
+top-bar tray (no window cluttering your desktop) and turns one keypress into a screenshot that's instantly
+on your clipboard, ready to paste anywhere. It also annotates, pins shots on top of your screen, extracts
+text with OCR, and keeps a history — everything CleanShot does, on Linux.</p>
+<p>You asked for exactly one thing at its heart: <em>“press a key, drag what I want, and have it copied so I
+can paste it everywhere.”</em> That's the spine of ClipShot. Everything else is built around it.</p>
+
+<h2><span class="n">02</span> The core flow</h2>
+<p>This is what happens the instant you press <span class="kbd">Super + Shift + S</span>:</p>
+<div class="card">
+<div class="flow">
+  <div class="step"><div class="num">1</div><div><b>Capture the whole screen</b><div class="d">A full-screen still is grabbed through the secure desktop “portal”. Because it's a frozen photo, the picture can't change while you choose — this is the “freeze the screen” trick that makes selection precise.</div></div></div>
+  <div class="step"><div class="num">2</div><div><b>Show the selection overlay</b><div class="d">That still is shown full-screen with a dimmed wash. You drag a box; inside the box stays bright. You get a crosshair, a pixel magnifier loupe, and a live <code>W × H</code> readout.</div></div></div>
+  <div class="step"><div class="num">3</div><div><b>Fine-tune the box</b><div class="d">Don't redraw if it's slightly off — drag the handles to resize, drag inside to move, or nudge with arrow keys (1px, or 10px with Shift). <span class="kbd">Enter</span> confirms, <span class="kbd">Esc</span> cancels.</div></div></div>
+  <div class="step"><div class="num">4</div><div><b>Crop &amp; copy</b><div class="d">The region is cropped and placed on the clipboard as a PNG — <b>before</b> any other UI appears. You can <span class="kbd">Ctrl+V</span> immediately into a browser, chat, editor, anywhere.</div></div></div>
+  <div class="step"><div class="num">5</div><div><b>The floating HUD</b><div class="d">A little thumbnail card slides into the corner with buttons: Copy, Save, Annotate, Pin. Ignore it and keep working, or click in to do more. It never steals your focus.</div></div></div>
+</div>
+</div>
+<p class="lab" style="font-size:13.5px">Pipeline in one line: &nbsp;hotkey → portal capture → frozen still → drag-crop → wl-copy (clipboard) → HUD → optional annotate / pin / OCR / history.</p>
+
+<h2><span class="n">03</span> Why this design (the Wayland problem)</h2>
+<p>On modern GNOME (Wayland), apps are <b>not allowed</b> to freely grab the screen or draw their own
+overlay on top of everything — that's a deliberate security wall. It's exactly why tools like Flameshot,
+grim and slurp are broken or flaky on GNOME. ClipShot sidesteps the wall with the only reliable pattern:</p>
+<ul class="clean">
+  <li><b>Capture first, select second.</b> Grab a full-screen still through the official portal, then let you crop it inside a normal app window. No forbidden “live overlay” needed — and it gives the frozen-screen feel for free.</li>
+  <li><b>Drive the clipboard ourselves.</b> The PNG is handed to <code>wl-copy</code> in its own detached session, so the copied image survives even after every ClipShot window closes — solving the classic Wayland “clipboard empties when the app exits” trap.</li>
+  <li><b>A real tray icon</b> via a pure D-Bus StatusNotifierItem (rendered by your AppIndicator extension), with zero GTK3 baggage.</li>
+</ul>
+<div class="note ok"><b>Verified on your machine:</b> full-screen capture (4096×2160) → crop → clipboard round-trips byte-for-byte, and the cropped image pastes into any app. 43 automated tests pass.</div>
+
+<h2><span class="n">04</span> Everything it does</h2>
+<div class="grid">
+  <div class="feat"><h4><span class="ic" style="background:var(--blue)"></span>Region capture</h4><p>Crosshair, pixel magnifier, live dimensions, adjustable handles, arrow-key nudging, aspect-lock.</p></div>
+  <div class="feat"><h4><span class="ic" style="background:var(--cyan)"></span>Fullscreen &amp; window</h4><p>Grab the whole screen instantly, or a single window (window mode shines once the Shell extension is on).</p></div>
+  <div class="feat"><h4><span class="ic" style="background:var(--green)"></span>Auto clipboard</h4><p>Image on the clipboard the moment you release — paste anywhere, no extra click.</p></div>
+  <div class="feat"><h4><span class="ic" style="background:var(--mag)"></span>Floating HUD</h4><p>Corner thumbnail with Copy / Save / Annotate / Pin. Non-blocking; keep working while it waits.</p></div>
+  <div class="feat"><h4><span class="ic" style="background:var(--orange)"></span>Annotation editor</h4><p>Arrows, lines, boxes, ellipses, text, highlighter, numbered step-counter, blur &amp; pixelate redaction, crop. Undo/redo.</p></div>
+  <div class="feat"><h4><span class="ic" style="background:var(--yellow)"></span>Pin to screen</h4><p>Float a shot on top of everything as a reference — resize, adjust opacity, multiple at once.</p></div>
+  <div class="feat"><h4><span class="ic" style="background:var(--red)"></span>OCR → text</h4><p>Drag over any text on screen; the recognized text lands on your clipboard (needs <code>tesseract</code>).</p></div>
+  <div class="feat"><h4><span class="ic" style="background:var(--blue)"></span>History</h4><p>A grid of recent captures you can re-copy, re-pin, annotate, or delete.</p></div>
+  <div class="feat"><h4><span class="ic" style="background:var(--cyan)"></span>Self-timer</h4><p>Delay the capture a few seconds to set up menus or hover states first.</p></div>
+  <div class="feat"><h4><span class="ic" style="background:var(--green)"></span>Settings &amp; tray</h4><p>A full preferences window (every option below) reachable from the tray menu — no terminal needed.</p></div>
+</div>
+
+<h2><span class="n">05</span> Default shortcuts</h2>
+<table>
+  <tr><th>Shortcut</th><th>Action</th></tr>
+  <tr><td><span class="kbd">Super + Shift + S</span></td><td>Capture a region (the main one)</td></tr>
+  <tr><td><span class="kbd">Super + Shift + F</span></td><td>Capture the whole screen</td></tr>
+  <tr><td><span class="kbd">Super + Shift + W</span></td><td>Capture a window</td></tr>
+  <tr><td><span class="kbd">Super + Shift + T</span></td><td>Extract text (OCR) from a region</td></tr>
+  <tr><td><span class="kbd">Super + Shift + R</span></td><td>Repeat the last region</td></tr>
+</table>
+<p>All of these are editable in <b>Settings → Shortcuts</b>. You also chose to bind a <b>mouse side-button</b> to
+region capture — that's wired through <code>input-remapper</code> (one of the setup steps below). Inside the
+selector: <span class="kbd">Enter</span> confirm, <span class="kbd">Esc</span> cancel, arrows nudge, drag handles to resize.</p>
+
+<h2><span class="n">06</span> How it's built</h2>
+<p>It's a single Python package using GTK4 + libadwaita — the same toolkit GNOME itself uses, so it looks
+and feels native, with no heavy runtime and no compile step to hack on it.</p>
+<table>
+  <tr><th>Piece</th><th>Job</th></tr>
+  <tr><td><code>capture.py</code></td><td>Grab the screen via the XDG portal (or the optional Shell extension)</td></tr>
+  <tr><td><code>region_selector.py</code></td><td>The full-screen overlay: crosshair, magnifier, dimensions, handles</td></tr>
+  <tr><td><code>clipboard.py</code></td><td>Detached <code>wl-copy</code> / <code>xclip</code> — image &amp; text, persists after exit</td></tr>
+  <tr><td><code>app.py</code></td><td>The tray daemon &amp; brain — one instance, routes every hotkey</td></tr>
+  <tr><td><code>hud.py</code> · <code>annotate/</code> · <code>pin.py</code></td><td>Post-capture HUD, annotation editor, pin-to-screen</td></tr>
+  <tr><td><code>ocr.py</code> · <code>history.py</code> · <code>settings_ui.py</code></td><td>Text extraction, capture history, the preferences window</td></tr>
+  <tr><td><code>tray.py</code> · <code>shortcuts.py</code></td><td>Top-bar icon (D-Bus), GNOME hotkey registration</td></tr>
+  <tr><td><code>extension/</code></td><td>Optional GNOME Shell extension — sharper window capture &amp; overlay</td></tr>
+</table>
+
+<h2><span class="n">07</span> Installing it anywhere</h2>
+<p>On <b>this</b> machine it's already installed, running, and set to auto-start at login. For any new Linux box
+(Fedora, Debian/Ubuntu or Arch), one command does everything — installs the app, registers the hotkeys,
+enables auto-start, and drops in the extension:</p>
+<pre><span class="c"># on a fresh machine</span>
+curl -fsSL https://raw.githubusercontent.com/florinhrib/clipshot/main/install.sh | bash</pre>
+<p>To update later: <code>cd ~/clipshot &amp;&amp; git pull</code>. To remove: <code>./uninstall.sh</code>.</p>
+
+<h2><span class="n">08</span> Three steps to finish on this machine</h2>
+<p>The core works now. Three optional extras need a one-time action from you (they need your password or a
+logout, which I can't do for you):</p>
+<div class="note warn">
+<b>1 · OCR</b> — install the text engine:<br><code>sudo dnf install tesseract tesseract-langpack-eng</code></div>
+<div class="note warn">
+<b>2 · Mouse side-button</b> — install the remapper, then import the preset:<br>
+<code>sudo dnf install input-remapper</code> &nbsp;→ open <b>Input Remapper</b>, import <code>~/clipshot/presets/input-remapper/clipshot.json</code>, and Apply.</div>
+<div class="note warn">
+<b>3 · Sharper overlay</b> — <b>log out and back in</b>, then the ClipShot Shell extension loads (and the tray
+icon settles in). Enable it with <code>gnome-extensions enable clipshot@florinlab.uk</code> if needed.</div>
+<p>None of these block daily use — region capture, clipboard, annotation, pin and history all work without them.</p>
+
+<h2><span class="n">09</span> If something's off</h2>
+<ul class="clean">
+  <li><b>No tray icon?</b> The <span class="lab">AppIndicator Support</span> GNOME extension must be enabled (it already is on your box). A logout makes it pick up new icons.</li>
+  <li><b>First capture shows a permission popup?</b> That's GNOME asking to allow screenshots — click <b>Share</b> once; it's silent forever after.</li>
+  <li><b>Restart the background app:</b> <code>systemctl --user restart clipshot.service</code></li>
+  <li><b>See what it's doing:</b> <code>journalctl --user -u clipshot.service -f</code></li>
+  <li><b>Change anything:</b> the tray menu → <b>Settings</b>, or edit <code>~/.config/clipshot/config.json</code>.</li>
+</ul>
+
+<footer>
+  <p><b>ClipShot</b> · built for Florin on <span class="lab">pc-tower</span> (Fedora 44 · GNOME 50 · Wayland) ·
+  <a href="https://github.com/florinhrib/clipshot">github.com/florinhrib/clipshot</a></p>
+  <p>Your own tool — yours to change, extend, and carry to every Linux machine you own.</p>
+</footer>
+
+</div>
+</body>
+</html>
