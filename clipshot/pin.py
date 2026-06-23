@@ -23,6 +23,7 @@ from gi.repository import Gdk, GdkPixbuf, GLib, Gtk  # noqa: E402
 
 from .config import Config
 from .imaging import to_png_bytes
+from .style import install_css_once
 
 # Minimum logical size when the user resizes via corner-drag.
 _MIN_SIZE = 64
@@ -89,24 +90,11 @@ class PinWindow(Gtk.ApplicationWindow):
         except AttributeError:
             pass
 
-        # CSS styling
-        css_provider = Gtk.CssProvider()
-        if pin_rounded or pin_shadow:
-            css_provider.load_from_data(_CSS_ROUNDED_SHADOW)
-        else:
-            css_provider.load_from_data(_CSS_PLAIN)
-        Gtk.StyleContext.add_provider_for_display(
-            Gdk.Display.get_default(),
-            css_provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-        )
-        close_css = Gtk.CssProvider()
-        close_css.load_from_data(_CLOSE_CSS)
-        Gtk.StyleContext.add_provider_for_display(
-            Gdk.Display.get_default(),
-            close_css,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-        )
+        # CSS styling.  Registered once per display (not per pin window) so
+        # repeated pinning never leaks providers.
+        install_css_once(_CSS_ROUNDED_SHADOW if (pin_rounded or pin_shadow)
+                         else _CSS_PLAIN)
+        install_css_once(_CLOSE_CSS)
         self.add_css_class("pin-window")
 
         # Natural image dimensions

@@ -27,9 +27,13 @@ PORTAL_PATH = "/org/freedesktop/portal/desktop"
 SCREENSHOT_IFACE = "org.freedesktop.portal.Screenshot"
 REQUEST_IFACE = "org.freedesktop.portal.Request"
 # The Shell extension owns this dedicated well-known name on the session bus.
-EXT_BUS = "uk.florinlab.ClipShot"
-EXT_PATH = "/uk/florinlab/ClipShot"
-EXT_IFACE = "uk.florinlab.ClipShot"
+# MUST differ from the app's GApplication id ("uk.florinlab.ClipShot"): if the
+# extension owned that name, the GApplication daemon could not register
+# ("No such interface org.gtk.Actions" at /uk/florinlab/ClipShot) and would
+# fail to start. Keeping the extension on its own name lets both coexist.
+EXT_BUS = "uk.florinlab.ClipShotShell"
+EXT_PATH = "/uk/florinlab/ClipShotShell"
+EXT_IFACE = "uk.florinlab.ClipShotShell"
 
 _token_counter = itertools.count(1)
 

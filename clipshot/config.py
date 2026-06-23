@@ -36,6 +36,13 @@ DEFAULTS: dict[str, Any] = {
     "hud_corner": "bottom-left",        # bottom-left|bottom-right|top-left|top-right
     "hud_autoclose_seconds": 0,         # 0 = never
     "hud_autoclose_action": "discard",  # discard|save
+    # tray
+    "tray_enabled": True,               # StatusNotifierItem tray icon + menu.
+                                        # Some SNI hosts (e.g. the GNOME
+                                        # appindicator extension) busy-loop on
+                                        # the dbusmenu and peg the compositor;
+                                        # set False to run headless (hotkeys
+                                        # are unaffected).
     # backends
     "capture_backend": "auto",          # auto|extension|portal
     "clipboard_backend": "auto",        # auto|wayland|x11

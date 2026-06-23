@@ -17,8 +17,12 @@ import Shell from 'gi://Shell';
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const BUS_NAME = 'uk.florinlab.ClipShot';
-const OBJECT_PATH = '/uk/florinlab/ClipShot';
+// MUST differ from the ClipShot app's GApplication id ('uk.florinlab.ClipShot').
+// If this extension owned that exact name, the app's GApplication daemon could
+// not register on the bus and would fail to start. So the extension lives on its
+// own '...ClipShotShell' name; capture.py's EXT_BUS/EXT_PATH/EXT_IFACE match.
+const BUS_NAME = 'uk.florinlab.ClipShotShell';
+const OBJECT_PATH = '/uk/florinlab/ClipShotShell';
 
 // The D-Bus interface. Signatures match clipshot/capture.py exactly:
 //   CaptureScreen()       -> (s pngPath)
@@ -26,7 +30,7 @@ const OBJECT_PATH = '/uk/florinlab/ClipShot';
 //   SelectArea()          -> (i x, i y, i w, i h)
 const IFACE_XML = `
 <node>
-  <interface name="uk.florinlab.ClipShot">
+  <interface name="uk.florinlab.ClipShotShell">
     <method name="CaptureScreen">
       <arg type="s" direction="out" name="pngPath"/>
     </method>
@@ -75,9 +79,57 @@ export default class ClipShotHelperExtension extends Extension {
             null, // name acquired
             null  // name lost
         );
+
+        // HUD corner placement. GTK4 apps cannot position their own windows on
+        // Wayland, so ClipShot's HUD lands dead-centre. The app tags that window
+        // with a title like "ClipShot-HUD:bottom-right" (optionally ":<margin>");
+        // we watch for it and move it into the requested corner of its monitor's
+        // work area. Purely cosmetic — if anything fails the HUD stays where it is.
+        this._winCreatedId = global.display.connect('window-created', (_disp, win) => {
+            this._placeHudWindow(win);
+        });
+    }
+
+    _placeHudWindow(win) {
+        try {
+            let tries = 0;
+            // Title + size are not final at window-created; poll briefly.
+            this._placeSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 40, () => {
+                tries++;
+                let title = '';
+                try { title = win.get_title() || ''; } catch (_e) { return GLib.SOURCE_REMOVE; }
+                const m = title.match(/^ClipShot-HUD:(top-left|top-right|bottom-left|bottom-right)(?::(\d+))?$/);
+                if (!m) return tries < 50 ? GLib.SOURCE_CONTINUE : GLib.SOURCE_REMOVE;
+                const rect = win.get_frame_rect();
+                if (rect.width <= 1 || rect.height <= 1) {
+                    return tries < 50 ? GLib.SOURCE_CONTINUE : GLib.SOURCE_REMOVE;
+                }
+                const corner = m[1];
+                const margin = m[2] ? parseInt(m[2], 10) : 24;
+                const work = win.get_work_area_for_monitor(win.get_monitor());
+                let x = corner.endsWith('right')
+                    ? work.x + work.width - rect.width - margin
+                    : work.x + margin;
+                let y = corner.startsWith('bottom')
+                    ? work.y + work.height - rect.height - margin
+                    : work.y + margin;
+                win.move_frame(true, x, y);
+                return GLib.SOURCE_REMOVE;
+            });
+        } catch (e) {
+            // never throw from a signal handler
+        }
     }
 
     disable() {
+        if (this._winCreatedId) {
+            global.display.disconnect(this._winCreatedId);
+            this._winCreatedId = 0;
+        }
+        if (this._placeSource) {
+            GLib.source_remove(this._placeSource);
+            this._placeSource = 0;
+        }
         if (this._ownerId) {
             Gio.bus_unown_name(this._ownerId);
             this._ownerId = 0;

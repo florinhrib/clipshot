@@ -75,11 +75,12 @@ class ClipShotApp(Adw.Application):
             self.add_action(act)
         # The daemon must stay alive with no window open (tray-only app).
         self.hold()
-        try:
-            from .tray import Tray
-            self._tray = Tray(self)
-        except Exception as exc:  # tray is best-effort
-            print(f"[clipshot] tray unavailable: {exc}", file=sys.stderr)
+        if self.cfg["tray_enabled"]:
+            try:
+                from .tray import Tray
+                self._tray = Tray(self)
+            except Exception as exc:  # tray is best-effort
+                print(f"[clipshot] tray unavailable: {exc}", file=sys.stderr)
 
     def do_activate(self):
         # No-op: we are a background/tray app, no main window.

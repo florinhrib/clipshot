@@ -33,6 +33,7 @@ gi.require_version("GdkPixbuf", "2.0")
 from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk  # noqa: E402
 
 from . import clipboard, imaging
+from .style import install_css_once
 
 # Target card width in CSS pixels.
 _HUD_WIDTH = 260
@@ -99,6 +100,10 @@ class HudWindow(Gtk.ApplicationWindow):
         # --- window chrome -------------------------------------------------
         self.set_decorated(False)
         self.set_resizable(False)
+        # Tag the window so the optional ClipShot Shell extension can move it
+        # into the chosen corner (apps can't self-position on GNOME Wayland).
+        # Harmless without the extension — the title is never shown (undecorated).
+        self.set_title(f"ClipShot-HUD:{cfg.get('hud_corner', 'bottom-right')}")
         self.set_default_size(_HUD_WIDTH + _SHADOW_MARGIN * 2, -1)
         # Keep-above hint: removed in GTK4 (only existed on GTK3). On Wayland
         # there is no always-on-top for normal windows anyway; we attempt it for
@@ -110,14 +115,9 @@ class HudWindow(Gtk.ApplicationWindow):
         # Do not steal keyboard focus from whatever the user was typing in.
         self.set_can_focus(False)
 
-        # Apply CSS for rounded corners + shadow.
-        provider = Gtk.CssProvider()
-        provider.load_from_data(_CSS)
-        Gtk.StyleContext.add_provider_for_display(
-            Gdk.Display.get_default(),
-            provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-        )
+        # Apply CSS for rounded corners + shadow.  Registered once per display
+        # (not per HUD) — otherwise every capture would leak a provider.
+        install_css_once(_CSS)
 
         # --- root layout: transparent outer box provides shadow margin -----
         outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
@@ -128,9 +128,16 @@ class HudWindow(Gtk.ApplicationWindow):
         self.set_child(outer)
 
         # --- card frame ----------------------------------------------------
+        # The card is wrapped in a Gtk.WindowHandle: dragging anywhere on the
+        # card (except the buttons, which WindowHandle leaves clickable) moves
+        # the whole HUD via the compositor.  This is the ONLY way to reposition
+        # a window on GNOME Wayland — apps cannot set absolute position — so it
+        # is also how the user gets the card out of the screen centre.
         card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         card.add_css_class("clipshot-hud")
-        outer.append(card)
+        handle = Gtk.WindowHandle()
+        handle.set_child(card)
+        outer.append(handle)
 
         # --- thumbnail -----------------------------------------------------
         thumbnail_widget = self._build_thumbnail(result.image)
@@ -156,7 +163,10 @@ class HudWindow(Gtk.ApplicationWindow):
         self.add_controller(motion)
 
         # --- drag-to-export ------------------------------------------------
-        self._attach_drag_source(thumbnail_widget, result)
+        # Disabled: a DragSource on the thumbnail steals the drag gesture from
+        # the WindowHandle, so the card could no longer be moved. Repositioning
+        # the HUD (the user's explicit need) wins over drag-to-export here.
+        # self._attach_drag_source(thumbnail_widget, result)
 
         # --- auto-close timer ----------------------------------------------
         autoclose_secs = cfg["hud_autoclose_seconds"]
@@ -175,12 +185,25 @@ class HudWindow(Gtk.ApplicationWindow):
     # ------------------------------------------------------------------
 
     def _build_thumbnail(self, pil_image) -> Gtk.Widget:
-        """Return a Gtk.Image displaying the scaled screenshot."""
+        """Return a Gtk.Picture showing the scaled screenshot.
+
+        Gtk.Image is icon-oriented and renders an arbitrary screenshot
+        unreliably (frequently blank or icon-sized) — which is why the card
+        was showing "only the menu".  Gtk.Picture is the correct widget for a
+        real image; we pin its size so the card actually reserves room for it.
+        """
         try:
             pbuf = _scaled_pixbuf(pil_image, _HUD_WIDTH - 12, _THUMBNAIL_MAX_HEIGHT)
-            thumbnail = Gtk.Image.new_from_pixbuf(pbuf)
+            texture = Gdk.Texture.new_for_pixbuf(pbuf)
+            thumbnail = Gtk.Picture.new_for_paintable(texture)
+            thumbnail.set_can_shrink(True)
+            try:
+                thumbnail.set_content_fit(Gtk.ContentFit.CONTAIN)  # GTK 4.8+
+            except AttributeError:
+                pass
+            # A Picture with no size request can collapse to zero height; pin it.
+            thumbnail.set_size_request(pbuf.get_width(), pbuf.get_height())
         except Exception:
-            # Fallback: a placeholder label if pixbuf conversion fails.
             thumbnail = Gtk.Label(label="[thumbnail unavailable]")
         thumbnail.set_hexpand(True)
         thumbnail.set_vexpand(False)

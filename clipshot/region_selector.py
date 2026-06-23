@@ -66,7 +66,20 @@ class RegionSelector(Gtk.ApplicationWindow):
 
         self.set_decorated(False)
         self.set_resizable(False)
-        self.fullscreen()
+
+        # Match the window to the monitor we captured.  Calling fullscreen() in
+        # __init__ alone is unreliable on some Wayland compositors (the window
+        # stays at its 200x200 default, shrinking the still to a thumbnail), so
+        # we (1) size the window to the target monitor up front, (2) fullscreen
+        # on that specific monitor, and (3) re-assert fullscreen once mapped.
+        self._target_monitor = self._pick_monitor()
+        if self._target_monitor is not None:
+            geo = self._target_monitor.get_geometry()
+            self.set_default_size(geo.width, geo.height)
+            self.fullscreen_on_monitor(self._target_monitor)
+        else:
+            self.fullscreen()
+        self.connect("map", lambda *_: self._ensure_fullscreen())
 
         self.area = Gtk.DrawingArea()
         self.area.set_hexpand(True)
@@ -75,6 +88,45 @@ class RegionSelector(Gtk.ApplicationWindow):
         self.set_child(self.area)
 
         self._install_controllers()
+
+    # --- monitor / fullscreen --------------------------------------------
+    def _pick_monitor(self):
+        """Choose the monitor to cover: prefer the one whose pixel size matches
+        the captured still, else the pointer's monitor, else the first."""
+        display = Gdk.Display.get_default()
+        if display is None:
+            return None
+        monitors = display.get_monitors()
+        n = monitors.get_n_items()
+        if n == 0:
+            return None
+        # 1. exact pixel match to the capture (handles per-monitor scale=1)
+        for i in range(n):
+            m = monitors.get_item(i)
+            g = m.get_geometry()
+            sf = m.get_scale_factor() or 1
+            if g.width * sf == self.img_w and g.height * sf == self.img_h:
+                return m
+        # 2. pointer's monitor (where the screenshot was triggered)
+        try:
+            seat = display.get_default_seat()
+            ptr = seat.get_pointer()
+            surf, x, y = ptr.get_surface_at_position()  # may be (None, ...)
+            mon = display.get_monitor_at_surface(surf) if surf else None
+            if mon is not None:
+                return mon
+        except Exception:
+            pass
+        # 3. first monitor
+        return monitors.get_item(0)
+
+    def _ensure_fullscreen(self):
+        """Re-assert fullscreen after the window is mapped (compositor safety net)."""
+        if self._target_monitor is not None:
+            self.fullscreen_on_monitor(self._target_monitor)
+        else:
+            self.fullscreen()
+        return False
 
     # --- coordinate mapping (widget <-> image) ---------------------------
     def _scale(self) -> float:
